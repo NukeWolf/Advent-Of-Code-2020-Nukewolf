@@ -120,14 +120,10 @@ class Tile:
         return nodes
     def getFinalImage(self):
         newImage = self.image.copy()
-        if(self.N == None):
-            newImage = newImage[1:]
-        if(self.S == None):
-            newImage = newImage[:-1]
-        if(self.E == None):
-            newImage = [row[:-1] for row in newImage]
-        if(self.W == None):
-            newImage = [row[1:] for row in newImage]
+        newImage = newImage[1:]
+        newImage = newImage[:-1]
+        newImage = [row[:-1] for row in newImage]
+        newImage = [row[1:] for row in newImage]
         return newImage
 tiles = []
 
@@ -138,12 +134,15 @@ for rawTile in rawTiles:
 #Resolve tile node pointer by recursion, along with final orientation of the tile
 def resolveTile(tile):
     for side in tile.original:
+        collisions = 0
         for tileCheck in tiles:
             if (tile.id == tileCheck.id):
                 continue
             if(tileCheck.checkTile(tile,side)):
                 tile.setNode(side,tileCheck)
-                break
+                collisions += 1
+        if(collisions == 2):
+            print("COLLISION")
     tile.resolved = True
     nodes = tile.getNodes()
     for node in nodes:
@@ -158,7 +157,7 @@ for tile in tiles:
     if(tile.N == None and tile.W == None):
         topleft = tile
 
-#Recursively Parse through Image
+#Recursively Parse through Image into 2D array
 finalPic = []
 global row
 row = []
@@ -172,13 +171,67 @@ def parsePicture(tile):
         row = []
     if(tile.S != None and tile.W == None):
         parsePicture(tile.S)
-        
-
 parsePicture(topleft)
+
+#Parse 2d array of images into one image 2d array
+finalParse = []
+for row in finalPic:
+    for height in range(len(row[0])):
+        line = ''
+        for col in row:
+            line += col[height]
+        finalParse.append(line)
 pprint(finalPic[0][0])
+pprint(finalPic[0][1])
+pprint(finalPic[1][1])
+pprint(finalParse)
 
 
-    
+#Process Sea Monster into array of tuples to check relative to checking point.
+with open('sea_monster.txt','r') as f:
+    array = f.read().split('\n')
+seaMonsterCheck = []
+for x,row in enumerate(array):
+    for y,val in enumerate(row):
+        if(val == "#"):
+            seaMonsterCheck.append((x,y))
+seaMonsterHeight = len(array)
+seaMonsterWidth = len(array[0])
+pictureHeight = len(finalParse)
+pictureWidth = len(finalParse[0])
+pprint(seaMonsterCheck)
+
+def checkCoords(x,y,image):
+    for checkx,checky in seaMonsterCheck:
+        if(image[x+checkx][y+checky] != "#"):
+            return False
+    return True
+
+#Possible orientatinos of the final parse
+possibleImages = [finalParse]
+possibleImages.append(flipXImg(finalParse))
+possibleImages.append(flipYImg(finalParse))
+possibleImages.append(flipYImg(flipXImg(finalParse)))
+newImages = []
+for image in possibleImages:
+    newImages.append(rotateRightImg(image))
+possibleImages.extend(newImages)
+
+
+for image in possibleImages:
+    monsterCount = 0
+    for x,y in itertools.product(range(pictureHeight-seaMonsterHeight+1),range(pictureWidth-seaMonsterWidth+1)):
+        if(checkCoords(x,y,image)):
+            monsterCount += 1
+    print(monsterCount)
+
+count = 0
+for row in finalParse:
+    for val in row:
+        if(val == "#"):
+            count+=1
+print(count)
+#pprint(possibleImages)
 #Part 1
 #total = 1
 #for tile in tiles:
