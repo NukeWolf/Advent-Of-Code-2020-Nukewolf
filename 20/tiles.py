@@ -134,15 +134,11 @@ for rawTile in rawTiles:
 #Resolve tile node pointer by recursion, along with final orientation of the tile
 def resolveTile(tile):
     for side in tile.original:
-        collisions = 0
         for tileCheck in tiles:
             if (tile.id == tileCheck.id):
                 continue
             if(tileCheck.checkTile(tile,side)):
                 tile.setNode(side,tileCheck)
-                collisions += 1
-        if(collisions == 2):
-            print("COLLISION")
     tile.resolved = True
     nodes = tile.getNodes()
     for node in nodes:
